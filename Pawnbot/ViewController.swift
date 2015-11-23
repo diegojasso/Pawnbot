@@ -7,12 +7,16 @@
 //
 
 import UIKit
+import MobileCoreServices
 
-class ViewController: UIViewController{
+class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate{
 
     @IBOutlet var CatalogTableView: UITableView!
 //    @IBOutlet var ItemTableView: UITableView!
+    @IBOutlet weak var imageView: UIImageView!
+    @IBOutlet weak var KilatajeButton: UIButton!
     
+    var newMedia: Bool?
     var arrayofPrendas: [Prenda] = [Prenda]()
     var arrayofItems: [Producto] = [Producto]()
     
@@ -21,14 +25,124 @@ class ViewController: UIViewController{
         // Do any additional setup after loading the view, typically from a nib.
         
         self.setPrenda()
-//        self.setItem()
+        //        self.setItem()
     }
-
+    
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
+    
+    @IBAction func useCamera(sender: AnyObject) {
+        
+        if UIImagePickerController.isSourceTypeAvailable(
+            UIImagePickerControllerSourceType.Camera) {
+                
+                let imagePicker = UIImagePickerController()
+                
+                imagePicker.delegate = self
+                imagePicker.sourceType =
+                    UIImagePickerControllerSourceType.Camera
+                imagePicker.mediaTypes = [kUTTypeImage as String]
+                imagePicker.allowsEditing = false
+                
+                self.presentViewController(imagePicker, animated: true, 
+                    completion: nil)
+                newMedia = true
+        }
+    }
+    
+    @IBAction func useCameraRoll(sender: AnyObject) {
+        
+        if UIImagePickerController.isSourceTypeAvailable(
+            UIImagePickerControllerSourceType.SavedPhotosAlbum) {
+                let imagePicker = UIImagePickerController()
+                
+                imagePicker.delegate = self
+                imagePicker.sourceType =
+                    UIImagePickerControllerSourceType.PhotoLibrary
+                imagePicker.mediaTypes = [kUTTypeImage as String]
+                imagePicker.allowsEditing = false
+                self.presentViewController(imagePicker, animated: true,
+                    completion: nil)
+                newMedia = false
+        }
+    }
+    
+    func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : AnyObject]) {
+        
+        let mediaType = info[UIImagePickerControllerMediaType] as! String
+        
+        self.dismissViewControllerAnimated(true, completion: nil)
+        
+        if mediaType == kUTTypeImage as String {
+            let image = info[UIImagePickerControllerOriginalImage]
+                as! UIImage
+            
+            imageView.image = image
+            
+            if (newMedia == true) {
+                UIImageWriteToSavedPhotosAlbum(image, self,
+                    "image:didFinishSavingWithError:contextInfo:", nil)
+            } else if mediaType == kUTTypeImage as String {
+                // Code to support video here
+            }
+            
+        }
+    }
+    
+    func image(image: UIImage, didFinishSavingWithError error: NSErrorPointer, contextInfo:UnsafePointer<Void>) {
+        
+        if error != nil {
+            let alert = UIAlertController(title: "Save Failed",
+                message: "Failed to save image",
+                preferredStyle: UIAlertControllerStyle.Alert)
+            
+            let cancelAction = UIAlertAction(title: "OK",
+                style: .Cancel, handler: nil)
+            
+            alert.addAction(cancelAction)
+            self.presentViewController(alert, animated: true,
+                completion: nil)
+        }
+    }
+    
+    func imagePickerControllerDidCancel(picker: UIImagePickerController) {
+        self.dismissViewControllerAnimated(true, completion: nil)
+    }
+    
+    @IBAction func showAlertWasTapped(sender: UIButton) {
+        
+        let alertController = UIAlertController(title: "Tipo", message: "Elige la categoría de tu producto", preferredStyle: UIAlertControllerStyle.ActionSheet)
+        
+        let okAction = UIAlertAction(title: "Celulares", style: UIAlertActionStyle.Default, handler: {(alert :UIAlertAction) in
+            self.KilatajeButton.setTitle("Celular", forState: .Normal)
 
+            print("OK button tapped")
+        })
+        alertController.addAction(okAction)
+        
+        let dosAction = UIAlertAction(title: "Tablet digital", style: UIAlertActionStyle.Default, handler: {(alert :UIAlertAction) in
+            self.KilatajeButton.setTitle("Tablet", forState: .Normal)
+
+            print("OK button tapped")
+        })
+        alertController.addAction(dosAction)
+        
+        let deleteAction = UIAlertAction(title: "Cancel", style: UIAlertActionStyle.Destructive, handler: {(alert :UIAlertAction) in
+            self.KilatajeButton.setTitle("Tipo", forState: .Normal)
+
+            print("Delete button tapped")
+        })
+        alertController.addAction(deleteAction)
+        
+        alertController.popoverPresentationController?.sourceView = view
+        alertController.popoverPresentationController?.sourceRect = sender.frame
+        
+        presentViewController(alertController, animated: true, completion: nil)
+        
+    }
+    
     func setPrenda()
     {
         let prenda1 = Prenda(name: "Electrodomésticos", image: "Images/home.png")
@@ -42,20 +156,6 @@ class ViewController: UIViewController{
         arrayofPrendas.append(prenda4)
 
     }
-    
-    
-//    func setItem()
-//    {
-//        let item1 = Producto(name: "Electrodomésticos", image: "Images/home.png", rango:"$400 - $500")
-//        let item2 = Producto(name: "Celulares", image:"Images/phone.png", rango:"$400 - $500")
-//        let item3 = Producto(name: "Computadoras", image:"Images/pc.png", rango:"$400 - $500")
-//        let item4 = Producto(name: "Joyas", image:"Images/jewel.png", rango:"$400 - $500")
-//        
-//        arrayofItems.append(item1)
-//        arrayofItems.append(item2)
-//        arrayofItems.append(item3)
-//        arrayofItems.append(item4)
-//    }
     
     func tableView(tableView: UITableView!, numberOfRowsInSection section: Int) -> Int
     {
@@ -77,21 +177,7 @@ class ViewController: UIViewController{
     
     }
     
-//    func itemtableView(itemtableView: UITableView!, numberOfRowsInSection section: Int) -> Int
-//    {
-//        return arrayofItems.count
-//    }
-//    
-//    func itemtableView(itemtableView: UITableView!, cellForRowAtIndexPath indexPath: NSIndexPath!) -> UITableViewCell!
-//    {
-//        let itemcell: PrendaListCell = itemtableView.dequeueReusableCellWithIdentifier("ItemCell") as! PrendaListCell
-//
-//        let item = arrayofItems[indexPath.row]
-//        itemcell.setitemCell(item.name, itemImage: item.image,itemPrice: item.rango)
-//        
-//        return itemcell
-//        
-//    }
+
     
 }
 
